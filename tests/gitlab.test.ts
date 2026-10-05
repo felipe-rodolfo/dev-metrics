@@ -81,4 +81,36 @@ describe('gitlab adapter', () => {
     const eventsUrl = new URL(calls.find((c) => c.url.includes('/events'))!.url);
     expect(eventsUrl.searchParams.get('before')).toBe('2026-07-01');
   });
+
+  it('marca a contagem de commits como incompleta quando há bulk push, sem perder as MRs', async () => {
+    const { fetch: fetchImpl } = fakeFetch((url) => {
+      if (url.endsWith('/api/v4/user')) return jsonResponse({ id: 7, username: 'ana' });
+      if (url.includes('/events')) {
+        return jsonResponse([
+          { created_at: '2026-02-01T10:00:00.000+00:00', action_name: 'pushed to', push_data: { commit_count: 0, ref_count: 5, ref_type: 'branch' } },
+          { created_at: '2026-03-01T10:00:00.000+00:00', action_name: 'pushed to', push_data: { commit_count: 2, ref_count: 1, ref_type: 'branch' } },
+        ]);
+      }
+      if (url.includes('/merge_requests?') && url.includes('created_after')) {
+        return jsonResponse([mr(1, 'opened', '2026-02-01T00:00:00.000+00:00', null)]);
+      }
+      return jsonResponse([]);
+    });
+
+    const data = await createGitLabAdapter(cfg, { fetchImpl }).collect(period);
+    expect(data.commitsNote).toContain('bulk push');
+    expect(data.changeRequests).toHaveLength(1);
+    expect(data.commits.reduce((total, c) => total + c.count, 0)).toBe(2);
+  });
+
+  it('não marca nada quando todos os pushes trazem a contagem de commits', async () => {
+    const { fetch: fetchImpl } = fakeFetch((url) => {
+      if (url.includes('/events')) {
+        return jsonResponse([{ created_at: '2026-02-01T10:00:00.000+00:00', action_name: 'pushed to', push_data: { commit_count: 3, ref_count: 1, ref_type: 'branch' } }]);
+      }
+      return jsonResponse([]);
+    });
+    const data = await createGitLabAdapter(cfg, { fetchImpl }).collect(period);
+    expect(data.commitsNote).toBeUndefined();
+  });
 });

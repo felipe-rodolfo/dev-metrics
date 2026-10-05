@@ -26,6 +26,13 @@ describe('renderReport', () => {
     expect(renderReport(period, metrics, results)).toContain('Tamanho mediano em linhas alteradas: sem dados');
   });
 
+  it('avisa que a contagem de commits está incompleta quando uma fonte sinaliza isso', () => {
+    const results: SourceResult[] = [
+      { ok: true, name: 'GitLab', data: { ...emptyData, commitsNote: 'bulk push sem contagem' } },
+    ];
+    expect(renderReport(period, metrics, results)).toContain('**Contagem de commits incompleta:** bulk push sem contagem');
+  });
+
   it('não mostra seções de fontes que não foram configuradas', () => {
     const results: SourceResult[] = [{ ok: true, name: 'GitHub', data: emptyData }];
     const report = renderReport(period, metrics, results);

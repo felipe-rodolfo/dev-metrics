@@ -36,6 +36,8 @@ export interface Collected {
   issues: Issue[];
   changeRequests: ChangeRequest[];
   commits: Commit[];
+  /** Presente quando a contagem de commits da fonte pode estar subestimada. */
+  commitsNote?: string;
 }
 
 export type SourceName = 'Jira' | 'GitHub' | 'GitLab';

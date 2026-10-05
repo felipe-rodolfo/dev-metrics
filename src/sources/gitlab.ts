@@ -129,7 +129,13 @@ export function createGitLabAdapter(cfg: GitLabConfig, opts: HttpOptions = {}): 
           count: event.push_data?.commit_count ?? 0,
         }));
 
-      return { issues: [], changeRequests, commits };
+      // Um bulk push (acima de push_event_activities_limit) vem com commit_count 0 e sem a lista de commits.
+      const hasZeroCountPush = events.some((event) => event.push_data !== null && event.push_data.commit_count === 0);
+      const commitsNote = hasZeroCountPush
+        ? 'há pushes com contagem zero, que podem ser bulk pushes do GitLab. A contagem de commits do GitLab pode estar subestimada.'
+        : undefined;
+
+      return { issues: [], changeRequests, commits, commitsNote };
     },
   };
 }

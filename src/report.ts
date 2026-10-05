@@ -46,6 +46,11 @@ export function renderReport(period: Period, metrics: Metrics, results: SourceRe
       `- Commits: ${metrics.commits}`,
       '',
     );
+    for (const result of results) {
+      if (result.ok && result.data.commitsNote) {
+        lines.push(`> **Contagem de commits incompleta:** ${result.data.commitsNote}`, '');
+      }
+    }
   }
 
   lines.push('## Fontes', '');
