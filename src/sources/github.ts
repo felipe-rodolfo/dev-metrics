@@ -35,12 +35,19 @@ export function createGitHubAdapter(cfg: GitHubConfig, opts: HttpOptions = {}): 
 
   async function searchAll<T>(endpoint: string, query: string): Promise<T[]> {
     const items: T[] = [];
+    let total = 0;
     for (let page = 1; ; page++) {
       const params = new URLSearchParams({ q: query, per_page: String(PAGE_SIZE), page: String(page) });
-      const { body } = await getJson<{ items: T[] }>(`${cfg.apiUrl}${endpoint}?${params}`, headers, opts);
+      const { body } = await getJson<{ total_count: number; items: T[] }>(`${cfg.apiUrl}${endpoint}?${params}`, headers, opts);
+      total = body.total_count;
       items.push(...body.items);
-      if (body.items.length < PAGE_SIZE) return items;
+      if (body.items.length < PAGE_SIZE) break;
     }
+    // A API de busca do GitHub devolve no máximo 1000 resultados; contar a menos sem avisar seria um erro silencioso.
+    if (items.length < total) {
+      throw new Error(`GitHub limita cada busca a 1000 resultados, e esta tem ${total}. O relatório ficaria incompleto.`);
+    }
+    return items;
   }
 
   return {

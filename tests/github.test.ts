@@ -78,4 +78,20 @@ describe('github adapter', () => {
     expect(data.commits).toHaveLength(101);
     expect(calls.filter((c) => c.url.includes('/search/commits'))).toHaveLength(2);
   });
+
+  it('falha em vez de contar a menos quando a busca passa do limite de 1000 resultados', async () => {
+    const { fetch: fetchImpl } = fakeFetch((url) => {
+      if (url.endsWith('/user')) return jsonResponse({ login: 'ana' });
+      if (url.includes('/search/commits')) {
+        const page = Number(new URL(url).searchParams.get('page'));
+        const items = page <= 10
+          ? Array.from({ length: 100 }, (_, i) => ({ sha: `s${page}-${i}`, commit: { committer: { date: '2026-02-01T00:00:00Z' } } }))
+          : [];
+        return jsonResponse({ total_count: 1500, items });
+      }
+      return jsonResponse({ total_count: 0, items: [] });
+    });
+
+    await expect(createGitHubAdapter(cfg, { fetchImpl }).collect(period)).rejects.toThrow(/1000 resultados/);
+  });
 });
