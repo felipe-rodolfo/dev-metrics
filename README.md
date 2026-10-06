@@ -10,17 +10,23 @@ Gera um relatório local de métricas de um desenvolvedor (Jira, GitHub e GitLab
 
 ## Uso
 
-```bash
-export JIRA_BASE_URL=https://sua-empresa.atlassian.net
-export JIRA_EMAIL=voce@empresa.com
-export JIRA_API_TOKEN=...
-export GITHUB_TOKEN=...
-export GITLAB_BASE_URL=https://gitlab.com
-export GITLAB_TOKEN=...
+Crie um arquivo `.env` na pasta do projeto (ele já está no `.gitignore`):
 
+```bash
+JIRA_BASE_URL=https://sua-empresa.atlassian.net
+JIRA_EMAIL=voce@empresa.com
+JIRA_API_TOKEN=...
+GITHUB_TOKEN=...
+GITLAB_BASE_URL=https://gitlab.com
+GITLAB_TOKEN=...
+```
+
+```bash
 npm run build
 node dist/cli.js --from 2026-01-01 --to 2026-06-30
 ```
+
+A CLI lê o `.env` da pasta de execução. Variáveis já definidas no terminal têm prioridade sobre ele.
 
 O Jira é obrigatório. Defina também pelo menos um entre `GITHUB_TOKEN` e `GITLAB_TOKEN`. Se você usa as duas plataformas, defina as duas.
 
