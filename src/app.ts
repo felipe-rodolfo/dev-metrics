@@ -52,7 +52,7 @@ export async function run(argv: string[], env: NodeJS.ProcessEnv, deps: AppDeps 
   const markdown = renderReport(config.period, results);
 
   await mkdir(config.outDir, { recursive: true });
-  const file = join(config.outDir, `relatorio-${config.period.from}_${config.period.to}.md`);
+  const file = join(config.outDir, `report-${config.period.from}_${config.period.to}.md`);
   await writeFile(file, markdown, 'utf8');
   out(`Relatório gerado: ${file}`);
 

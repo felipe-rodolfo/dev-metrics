@@ -45,7 +45,7 @@ export function createGitHubAdapter(cfg: GitHubConfig, opts: HttpOptions = {}): 
     }
     // A API de busca do GitHub devolve no máximo 1000 resultados; contar a menos sem avisar seria um erro silencioso.
     if (items.length < total) {
-      throw new Error(`GitHub limita cada busca a 1000 resultados, e esta tem ${total}. O relatório ficaria incompleto.`);
+      throw new Error(`GitHub caps each search at 1000 results, and this one has ${total}. The report would be incomplete.`);
     }
     return items;
   }

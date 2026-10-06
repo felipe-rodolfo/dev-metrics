@@ -59,8 +59,8 @@ describe('run', () => {
   it('gera o arquivo e retorna 0 quando todas as fontes funcionam', async () => {
     const code = await run(argv(outDir), env, { ...io, adapters: () => [adapter({})] });
     expect(code).toBe(0);
-    const report = await readFile(join(outDir, 'relatorio-2026-01-01_2026-06-30.md'), 'utf8');
-    expect(report).toContain('## Atividade de código');
+    const report = await readFile(join(outDir, 'report-2026-01-01_2026-06-30.md'), 'utf8');
+    expect(report).toContain('## Code activity: GitHub');
   });
 
   it('falha parcial: gera o relatório com a fonte incompleta e retorna código diferente de zero', async () => {
@@ -72,8 +72,8 @@ describe('run', () => {
       ],
     });
     expect(code).toBe(1);
-    const report = await readFile(join(outDir, 'relatorio-2026-01-01_2026-06-30.md'), 'utf8');
-    expect(report).toContain('Seção incompleta');
+    const report = await readFile(join(outDir, 'report-2026-01-01_2026-06-30.md'), 'utf8');
+    expect(report).toContain('Incomplete section');
     expect(report).toContain('HTTP 503 em gitlab.exemplo.com');
     expect(errors.join('\n')).toContain('incompletas');
   });

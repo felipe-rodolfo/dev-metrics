@@ -47,7 +47,7 @@ export function loadConfig(argv: string[], env: NodeJS.ProcessEnv): Config {
 
   const config: Config = {
     period: { from, to },
-    outDir: readArg(argv, 'out') ?? './relatorios',
+    outDir: readArg(argv, 'out') ?? './reports',
   };
 
   if (env.JIRA_API_TOKEN) {

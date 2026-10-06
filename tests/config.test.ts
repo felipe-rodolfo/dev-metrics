@@ -39,7 +39,7 @@ describe('loadConfig', () => {
     expect(() => loadConfig(base, { JIRA_API_TOKEN: 't' })).toThrow(ConfigError);
   });
 
-  it('usa ./relatorios como pasta de saída padrão', () => {
-    expect(loadConfig(base, { GITHUB_TOKEN: 'x' }).outDir).toBe('./relatorios');
+  it('usa ./reports como pasta de saída padrão', () => {
+    expect(loadConfig(base, { GITHUB_TOKEN: 'x' }).outDir).toBe('./reports');
   });
 });

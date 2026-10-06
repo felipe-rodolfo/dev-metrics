@@ -139,7 +139,7 @@ export function createGitLabAdapter(cfg: GitLabConfig, opts: HttpOptions = {}): 
           event.push_data.action !== 'removed',
       );
       const commitsNote = hasZeroCountPush
-        ? 'há pushes com contagem zero, que podem ser bulk pushes do GitLab. A contagem de commits do GitLab pode estar subestimada.'
+        ? 'some pushes have a zero commit count, which may be GitLab bulk pushes. The GitLab commit count may be underestimated.'
         : undefined;
 
       return { issues: [], changeRequests, commits, commitsNote };

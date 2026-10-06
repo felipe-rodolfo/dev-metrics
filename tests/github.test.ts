@@ -92,6 +92,6 @@ describe('github adapter', () => {
       return jsonResponse({ total_count: 0, items: [] });
     });
 
-    await expect(createGitHubAdapter(cfg, { fetchImpl }).collect(period)).rejects.toThrow(/1000 resultados/);
+    await expect(createGitHubAdapter(cfg, { fetchImpl }).collect(period)).rejects.toThrow(/1000 results/);
   });
 });

@@ -24,7 +24,7 @@ node dist/cli.js --from 2026-01-01 --to 2026-06-30
 
 Defina só os tokens das fontes que você usa. Uma fonte sem token é ignorada.
 
-O relatório é gravado em `./relatorios/relatorio-<de>_<ate>.md`. A pasta `relatorios/` fica fora do git.
+O relatório é gravado em `./reports/report-<from>_<to>.md`. A pasta `reports/` fica fora do git.
 
 Se uma fonte falhar, o relatório é gerado com a seção dela marcada como incompleta, e a CLI sai com código diferente de zero.
 

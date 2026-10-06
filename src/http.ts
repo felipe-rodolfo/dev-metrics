@@ -33,7 +33,7 @@ export async function getJson<T>(
       continue;
     }
     if (response.status === 401 || response.status === 403) {
-      throw new AuthError(`HTTP ${response.status} em ${host}: confira o token e a permissão de acesso.`);
+      throw new AuthError(`HTTP ${response.status} at ${host}: check the token and its access permissions.`);
     }
     if (!response.ok) {
       throw new HttpError(response.status, `HTTP ${response.status} em ${host}`);

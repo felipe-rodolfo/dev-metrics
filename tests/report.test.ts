@@ -5,7 +5,7 @@ import type { Collected, SourceResult } from '../src/model.js';
 const period = { from: '2026-01-01', to: '2026-06-30' };
 const emptyData: Collected = { issues: [], changeRequests: [], commits: [] };
 
-// Texto de uma seção `## <título>` até a próxima seção de nível 2.
+// Text of a `## <title>` section up to the next level-2 heading.
 function section(report: string, title: string): string {
   const start = report.indexOf(`## ${title}`);
   if (start === -1) return '';
@@ -14,40 +14,40 @@ function section(report: string, title: string): string {
 }
 
 describe('renderReport', () => {
-  it('mostra o título com o período', () => {
+  it('shows the title with the period', () => {
     const ok: SourceResult[] = [{ ok: true, name: 'Jira', data: emptyData }];
-    expect(renderReport(period, ok)).toContain('# Relatório de métricas: 2026-01-01 a 2026-06-30');
+    expect(renderReport(period, ok)).toContain('# Metrics report: 2026-01-01 to 2026-06-30');
   });
 
-  it('marca a seção do Jira como incompleta com o motivo', () => {
-    const results: SourceResult[] = [{ ok: false, name: 'Jira', reason: 'HTTP 500 em x.atlassian.net' }];
+  it('marks the Jira section as incomplete with the reason', () => {
+    const results: SourceResult[] = [{ ok: false, name: 'Jira', reason: 'HTTP 500 at x.atlassian.net' }];
     const report = renderReport(period, results);
-    expect(report).toContain('Seção incompleta');
-    expect(report).toContain('HTTP 500 em x.atlassian.net');
-    expect(report).toContain('- Jira: incompleta (HTTP 500 em x.atlassian.net)');
+    expect(report).toContain('Incomplete section');
+    expect(report).toContain('HTTP 500 at x.atlassian.net');
+    expect(report).toContain('- Jira: incomplete (HTTP 500 at x.atlassian.net)');
   });
 
-  it('mostra "sem dados" quando não há PR mergeado no período', () => {
+  it('shows "no data" when there is no merged PR in the period', () => {
     const results: SourceResult[] = [{ ok: true, name: 'GitHub', data: emptyData }];
-    expect(renderReport(period, results)).toContain('Tamanho mediano em linhas alteradas: sem dados');
+    expect(renderReport(period, results)).toContain('Median size in changed lines: no data');
   });
 
-  it('não mostra seções de fontes que não foram configuradas', () => {
+  it('does not show sections for sources that were not configured', () => {
     const results: SourceResult[] = [{ ok: true, name: 'GitHub', data: emptyData }];
     const report = renderReport(period, results);
-    expect(report).not.toContain('## Entregas no Jira');
-    expect(report).toContain('## Atividade de código: GitHub');
-    expect(report).not.toContain('## Atividade de código: GitLab');
+    expect(report).not.toContain('## Jira deliveries');
+    expect(report).toContain('## Code activity: GitHub');
+    expect(report).not.toContain('## Code activity: GitLab');
   });
 
-  it('avisa que a contagem de commits está incompleta quando uma fonte sinaliza isso', () => {
+  it('warns that the commit count is incomplete when a source flags it', () => {
     const results: SourceResult[] = [
-      { ok: true, name: 'GitLab', data: { ...emptyData, commitsNote: 'bulk push sem contagem' } },
+      { ok: true, name: 'GitLab', data: { ...emptyData, commitsNote: 'bulk push without count' } },
     ];
-    expect(renderReport(period, results)).toContain('**Contagem de commits incompleta:** bulk push sem contagem');
+    expect(renderReport(period, results)).toContain('**Incomplete commit count:** bulk push without count');
   });
 
-  it('separa GitHub e GitLab, cada um com as próprias métricas', () => {
+  it('separates GitHub and GitLab, each with its own metrics', () => {
     const results: SourceResult[] = [
       {
         ok: true,
@@ -70,28 +70,28 @@ describe('renderReport', () => {
       },
     ];
     const report = renderReport(period, results);
-    const github = section(report, 'Atividade de código: GitHub');
-    const gitlab = section(report, 'Atividade de código: GitLab');
+    const github = section(report, 'Code activity: GitHub');
+    const gitlab = section(report, 'Code activity: GitLab');
 
-    expect(github).toContain('PRs/MRs mergeados no período: 1');
+    expect(github).toContain('Merged PRs/MRs in period: 1');
     expect(github).toContain('Commits: 7');
-    expect(gitlab).toContain('PRs/MRs mergeados no período: 0');
+    expect(gitlab).toContain('Merged PRs/MRs in period: 0');
     expect(gitlab).toContain('Commits: 2');
-    expect(report).not.toContain('Atividade de código: GitHub + GitLab');
+    expect(report).not.toContain('Code activity: GitHub + GitLab');
   });
 
-  it('mostra a falha de uma fonte só na seção dela, mantendo as métricas da outra', () => {
+  it('shows a source failure only in its own section, keeping the other source metrics', () => {
     const results: SourceResult[] = [
       { ok: true, name: 'GitHub', data: { ...emptyData, commits: [{ source: 'github', committedAt: '2026-02-01T00:00:00Z', count: 4 }] } },
-      { ok: false, name: 'GitLab', reason: 'HTTP 403 em gitlab.com' },
+      { ok: false, name: 'GitLab', reason: 'HTTP 403 at gitlab.com' },
     ];
     const report = renderReport(period, results);
-    const gitlab = section(report, 'Atividade de código: GitLab');
-    const github = section(report, 'Atividade de código: GitHub');
+    const gitlab = section(report, 'Code activity: GitLab');
+    const github = section(report, 'Code activity: GitHub');
 
-    expect(gitlab).toContain('> **Seção incompleta:** HTTP 403 em gitlab.com');
+    expect(gitlab).toContain('> **Incomplete section:** HTTP 403 at gitlab.com');
     expect(gitlab).not.toContain('Commits:');
     expect(github).toContain('Commits: 4');
-    expect(github).not.toContain('Seção incompleta');
+    expect(github).not.toContain('Incomplete section');
   });
 });
