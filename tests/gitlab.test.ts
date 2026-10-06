@@ -103,6 +103,17 @@ describe('gitlab adapter', () => {
     expect(data.commits.reduce((total, c) => total + c.count, 0)).toBe(2);
   });
 
+  it('não marca a criação de branch sem commits novos como bulk push', async () => {
+    const { fetch: fetchImpl } = fakeFetch((url) => {
+      if (url.includes('/events')) {
+        return jsonResponse([{ created_at: '2026-07-26T10:00:00.000+00:00', action_name: 'pushed to', push_data: { commit_count: 0, action: 'created', ref_type: 'branch' } }]);
+      }
+      return jsonResponse([]);
+    });
+    const data = await createGitLabAdapter(cfg, { fetchImpl }).collect({ from: '2026-07-01', to: '2026-10-05' });
+    expect(data.commitsNote).toBeUndefined();
+  });
+
   it('não marca nada quando todos os pushes trazem a contagem de commits', async () => {
     const { fetch: fetchImpl } = fakeFetch((url) => {
       if (url.includes('/events')) {
