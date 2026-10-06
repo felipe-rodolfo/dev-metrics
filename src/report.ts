@@ -1,25 +1,23 @@
 import { Period, SourceName, SourceResult } from './model.js';
-import { Metrics } from './metrics.js';
+import { computeMetrics } from './metrics.js';
 
 function show(value: number | null): string {
   return value === null ? 'sem dados' : String(value);
 }
 
-export function renderReport(period: Period, metrics: Metrics, results: SourceResult[]): string {
+export function renderReport(period: Period, results: SourceResult[]): string {
   const configured = (name: SourceName) => results.some((result) => result.name === name);
-  const failureOf = (name: SourceName): string | null => {
-    const result = results.find((r) => r.name === name);
-    return result && !result.ok ? result.reason : null;
-  };
+  const resultOf = (name: SourceName) => results.find((r) => r.name === name);
 
   const lines: string[] = [`# Relatório de métricas: ${period.from} a ${period.to}`, ''];
 
   if (configured('Jira')) {
     lines.push('## Entregas no Jira', '');
-    const failure = failureOf('Jira');
-    if (failure) {
-      lines.push(`> **Seção incompleta:** ${failure}`, '');
-    } else {
+    const jira = resultOf('Jira');
+    if (jira && !jira.ok) {
+      lines.push(`> **Seção incompleta:** ${jira.reason}`, '');
+    } else if (jira?.ok) {
+      const metrics = computeMetrics(jira.data, period);
       lines.push(`- Issues concluídas: ${metrics.issuesResolved}`);
       for (const [type, count] of Object.entries(metrics.issuesByType).sort()) {
         lines.push(`  - ${type}: ${count}`);
@@ -28,15 +26,16 @@ export function renderReport(period: Period, metrics: Metrics, results: SourceRe
     }
   }
 
-  if (configured('GitHub') || configured('GitLab')) {
-    lines.push('## Atividade de código', '');
-    const codeFailures = (['GitHub', 'GitLab'] as const).flatMap((name) => {
-      const reason = failureOf(name);
-      return reason ? [`${name}: ${reason}`] : [];
-    });
-    if (codeFailures.length > 0) {
-      lines.push(`> **Seção incompleta:** ${codeFailures.join('; ')}`, '');
+  for (const name of ['GitHub', 'GitLab'] as const) {
+    if (!configured(name)) continue;
+    lines.push(`## Atividade de código: ${name}`, '');
+    const result = resultOf(name);
+    if (!result || !result.ok) {
+      lines.push(`> **Seção incompleta:** ${result && !result.ok ? result.reason : 'sem resposta'}`, '');
+      continue;
     }
+
+    const metrics = computeMetrics(result.data, period);
     lines.push(
       `- PRs/MRs abertos no período: ${metrics.changeRequestsOpen}`,
       `- PRs/MRs mergeados no período: ${metrics.changeRequestsMerged}`,
@@ -46,10 +45,8 @@ export function renderReport(period: Period, metrics: Metrics, results: SourceRe
       `- Commits: ${metrics.commits}`,
       '',
     );
-    for (const result of results) {
-      if (result.ok && result.data.commitsNote) {
-        lines.push(`> **Contagem de commits incompleta:** ${result.data.commitsNote}`, '');
-      }
+    if (result.data.commitsNote) {
+      lines.push(`> **Contagem de commits incompleta:** ${result.data.commitsNote}`, '');
     }
   }
 
