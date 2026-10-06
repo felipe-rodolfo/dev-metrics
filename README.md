@@ -22,7 +22,7 @@ npm run build
 node dist/cli.js --from 2026-01-01 --to 2026-06-30
 ```
 
-Defina só os tokens das fontes que você usa. Uma fonte sem token é ignorada.
+O Jira é obrigatório. Defina também pelo menos um entre `GITHUB_TOKEN` e `GITLAB_TOKEN`. Se você usa as duas plataformas, defina as duas.
 
 O relatório é gravado em `./reports/report-<from>_<to>.md`. A pasta `reports/` fica fora do git.
 

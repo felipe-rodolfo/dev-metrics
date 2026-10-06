@@ -7,7 +7,12 @@ import { AuthError } from '../src/http.js';
 import type { SourceAdapter } from '../src/sources/adapter.js';
 
 const argv = (out: string) => ['--from', '2026-01-01', '--to', '2026-06-30', '--out', out];
-const env = { GITHUB_TOKEN: 'gh' };
+const env = {
+  JIRA_API_TOKEN: 't',
+  JIRA_EMAIL: 'a@exemplo.com',
+  JIRA_BASE_URL: 'https://x.atlassian.net',
+  GITHUB_TOKEN: 'gh',
+};
 
 let outDir: string;
 let lines: string[];

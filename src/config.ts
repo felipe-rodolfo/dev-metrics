@@ -19,7 +19,7 @@ export interface GitLabConfig {
 export interface Config {
   period: Period;
   outDir: string;
-  jira?: JiraConfig;
+  jira: JiraConfig;
   github?: GitHubConfig;
   gitlab?: GitLabConfig;
 }
@@ -45,17 +45,14 @@ export function loadConfig(argv: string[], env: NodeJS.ProcessEnv): Config {
     throw new ConfigError('--from não pode ser depois de --to.');
   }
 
+  if (!env.JIRA_API_TOKEN || !env.JIRA_BASE_URL || !env.JIRA_EMAIL) {
+    throw new ConfigError('O Jira é obrigatório. Defina JIRA_BASE_URL, JIRA_EMAIL e JIRA_API_TOKEN.');
+  }
   const config: Config = {
     period: { from, to },
     outDir: readArg(argv, 'out') ?? './reports',
+    jira: { baseUrl: stripSlash(env.JIRA_BASE_URL), email: env.JIRA_EMAIL, token: env.JIRA_API_TOKEN },
   };
-
-  if (env.JIRA_API_TOKEN) {
-    if (!env.JIRA_BASE_URL || !env.JIRA_EMAIL) {
-      throw new ConfigError('JIRA_API_TOKEN exige JIRA_BASE_URL e JIRA_EMAIL.');
-    }
-    config.jira = { baseUrl: stripSlash(env.JIRA_BASE_URL), email: env.JIRA_EMAIL, token: env.JIRA_API_TOKEN };
-  }
 
   if (env.GITHUB_TOKEN) {
     config.github = {
@@ -71,8 +68,8 @@ export function loadConfig(argv: string[], env: NodeJS.ProcessEnv): Config {
     config.gitlab = { baseUrl: stripSlash(env.GITLAB_BASE_URL), token: env.GITLAB_TOKEN };
   }
 
-  if (!config.jira && !config.github && !config.gitlab) {
-    throw new ConfigError('Nenhum token definido. Defina JIRA_API_TOKEN, GITHUB_TOKEN e/ou GITLAB_TOKEN.');
+  if (!config.github && !config.gitlab) {
+    throw new ConfigError('Defina GITHUB_TOKEN e/ou GITLAB_TOKEN. Pelo menos uma fonte de código é obrigatória.');
   }
 
   return config;
