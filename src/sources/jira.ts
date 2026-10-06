@@ -3,6 +3,11 @@ import { Collected, Issue, Period, shiftDay, toUtcIso } from '../model.js';
 import { getJson, HttpOptions } from '../http.js';
 import type { SourceAdapter } from './adapter.js';
 
+interface JiraStatus {
+  name: string;
+  statusCategory: { key: string };
+}
+
 interface JiraSearchResponse {
   issues: { key: string; fields: { issuetype: { name: string }; resolutiondate: string } }[];
   nextPageToken?: string;
@@ -24,8 +29,17 @@ export function createJiraAdapter(cfg: JiraConfig, opts: HttpOptions = {}): Sour
     },
 
     async collect(period: Period): Promise<Collected> {
-      // resolved < dia seguinte garante que o último dia do período entra inteiro.
-      const jql = `assignee = currentUser() AND resolved >= "${period.from}" AND resolved < "${shiftDay(period.to, 1)}"`;
+      // Os nomes dos statuses concluídos variam por instância e idioma, então vêm da categoria de cada status.
+      const { body: statuses } = await getJson<JiraStatus[]>(`${api}/status`, headers, opts);
+      const doneNames = statuses
+        .filter((status) => status.statusCategory.key === 'done')
+        .map((status) => `"${status.name.replace(/"/g, '\\"')}"`);
+      if (doneNames.length === 0) {
+        return { issues: [], changeRequests: [], commits: [] };
+      }
+
+      // Quem moveu a issue para concluído, independentemente do responsável. O fim do DURING é exclusivo, por isso o dia seguinte.
+      const jql = `status CHANGED TO (${doneNames.join(',')}) BY currentUser() DURING ("${period.from}","${shiftDay(period.to, 1)}")`;
       const issues: Issue[] = [];
       let pageToken: string | undefined;
 

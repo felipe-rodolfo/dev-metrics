@@ -9,6 +9,11 @@ const issue = (key: string, type: string, resolutiondate: string) => ({
   key,
   fields: { issuetype: { name: type }, resolutiondate },
 });
+const statuses = [
+  { name: 'A fazer', statusCategory: { key: 'new' } },
+  { name: 'Em andamento', statusCategory: { key: 'indeterminate' } },
+  { name: 'Concluído', statusCategory: { key: 'done' } },
+];
 
 describe('jira adapter', () => {
   it('identify chama /myself com Basic auth e lança AuthError em 401', async () => {
@@ -22,27 +27,52 @@ describe('jira adapter', () => {
     await expect(createJiraAdapter(cfg, { fetchImpl: denied.fetch, sleep: async () => {} }).identify()).rejects.toBeInstanceOf(AuthError);
   });
 
-  it('collect percorre todas as páginas e inclui o último dia do período na JQL (review focus 2 e 3)', async () => {
+  it('busca issues que o usuário moveu para a categoria concluída no período, sem depender do responsável', async () => {
+    const { fetch: fetchImpl, calls } = fakeFetch((url) => {
+      if (url.includes('/rest/api/3/status')) return jsonResponse(statuses);
+      return jsonResponse({ issues: [issue('A-1', 'Story', '2026-02-10T10:00:00.000+0000')], isLast: true });
+    });
+    await createJiraAdapter(cfg, { fetchImpl }).collect(period);
+
+    const search = calls.find((c) => c.url.includes('/search/jql'))!;
+    const jql = new URL(search.url).searchParams.get('jql');
+    expect(jql).toBe('status CHANGED TO ("Concluído") BY currentUser() DURING ("2026-01-01","2026-07-01")');
+    expect(jql).not.toContain('assignee');
+  });
+
+  it('collect percorre todas as páginas e devolve as issues de cada uma (review focus 3)', async () => {
     const pages = [
       jsonResponse({ issues: [issue('A-1', 'Story', '2026-02-10T10:00:00.000+0000')], nextPageToken: 'p2', isLast: false }),
       jsonResponse({ issues: [issue('A-2', 'Bug', '2026-06-30T20:00:00.000+0000')], isLast: true }),
     ];
-    const { fetch: fetchImpl, calls } = fakeFetch(() => pages.shift()!);
+    const { fetch: fetchImpl, calls } = fakeFetch((url) => {
+      if (url.includes('/rest/api/3/status')) return jsonResponse(statuses);
+      return pages.shift()!;
+    });
     const data = await createJiraAdapter(cfg, { fetchImpl }).collect(period);
 
     expect(data.issues.map((i) => i.key)).toEqual(['A-1', 'A-2']);
-    expect(calls).toHaveLength(2);
-    expect(calls[1].url).toContain('nextPageToken=p2');
-    const jql = new URL(calls[0].url).searchParams.get('jql');
-    expect(jql).toContain('resolved >= "2026-01-01"');
-    expect(jql).toContain('resolved < "2026-07-01"');
+    const searches = calls.filter((c) => c.url.includes('/search/jql'));
+    expect(searches).toHaveLength(2);
+    expect(searches[1].url).toContain('nextPageToken=p2');
   });
 
   it('converte resolutiondate com offset diferente de UTC (review focus 5)', async () => {
-    const { fetch: fetchImpl } = fakeFetch(() =>
-      jsonResponse({ issues: [issue('A-3', 'Task', '2026-03-10T23:30:00.000-0300')], isLast: true }),
-    );
+    const { fetch: fetchImpl } = fakeFetch((url) => {
+      if (url.includes('/rest/api/3/status')) return jsonResponse(statuses);
+      return jsonResponse({ issues: [issue('A-3', 'Task', '2026-03-10T23:30:00.000-0300')], isLast: true });
+    });
     const data = await createJiraAdapter(cfg, { fetchImpl }).collect(period);
     expect(data.issues[0].resolvedAt).toBe('2026-03-11T02:30:00.000Z');
+  });
+
+  it('não consulta issues quando a instância não tem nenhum status da categoria concluída', async () => {
+    const { fetch: fetchImpl, calls } = fakeFetch((url) => {
+      if (url.includes('/rest/api/3/status')) return jsonResponse([{ name: 'A fazer', statusCategory: { key: 'new' } }]);
+      return jsonResponse({ issues: [], isLast: true });
+    });
+    const data = await createJiraAdapter(cfg, { fetchImpl }).collect(period);
+    expect(data.issues).toEqual([]);
+    expect(calls.some((c) => c.url.includes('/search/jql'))).toBe(false);
   });
 });
