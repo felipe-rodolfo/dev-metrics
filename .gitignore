@@ -4,3 +4,5 @@ reports/
 .env
 relatorios/
 docs/superpowers/
+brag-output/
+brag-output-*/
