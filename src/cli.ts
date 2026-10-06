@@ -2,7 +2,6 @@
 import { existsSync } from 'node:fs';
 import { run } from './app.js';
 
-// Credenciais ficam no .env da pasta de execução. Variáveis já definidas no terminal não são sobrescritas.
 if (existsSync('.env')) {
   process.loadEnvFile('.env');
 }

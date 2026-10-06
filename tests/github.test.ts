@@ -15,13 +15,13 @@ const pr = (number: number, state: 'open' | 'closed', mergedAt: string | null, c
 });
 
 describe('github adapter', () => {
-  it('identify usa /user e lança AuthError em 401', async () => {
+  it('identify uses /user and throws AuthError on 401', async () => {
     const { fetch: fetchImpl, calls } = fakeFetch(() => jsonResponse({ login: 'ana' }));
     await createGitHubAdapter(cfg, { fetchImpl }).identify();
     expect(calls[0].url).toBe('https://api.github.com/user');
   });
 
-  it('classifica PRs e busca tamanho só dos mergeados dentro do período (review focus 2)', async () => {
+  it('classifies PRs and fetches size only for merged PRs within the period (review focus 2)', async () => {
     const { fetch: fetchImpl, calls } = fakeFetch((url) => {
       if (url.endsWith('/user')) return jsonResponse({ login: 'ana' });
       if (url.includes('/search/issues') && url.includes('created')) {
@@ -35,7 +35,7 @@ describe('github adapter', () => {
         });
       }
       if (url.includes('/search/issues') && url.includes('merged')) {
-        // Criado antes do período, mergeado dentro dele.
+        // Created before the period, merged inside it.
         return jsonResponse({ total_count: 1, items: [pr(4, 'closed', '2026-01-15T00:00:00Z', '2025-12-01T00:00:00Z')] });
       }
       if (url.includes('/search/commits')) {
@@ -64,7 +64,7 @@ describe('github adapter', () => {
     expect(data.commits).toEqual([{ source: 'github', committedAt: '2026-06-30T23:00:00.000Z', count: 1 }]);
   });
 
-  it('pagina a pesquisa quando há mais de uma página (review focus 3)', async () => {
+  it('paginates the search when there is more than one page (review focus 3)', async () => {
     const firstPage = Array.from({ length: 100 }, (_, i) => ({ sha: `s${i}`, commit: { committer: { date: '2026-02-01T00:00:00Z' } } }));
     const secondPage = [{ sha: 'last', commit: { committer: { date: '2026-02-02T00:00:00Z' } } }];
     const pages = [{ total_count: 101, items: firstPage }, { total_count: 101, items: secondPage }];
@@ -79,7 +79,7 @@ describe('github adapter', () => {
     expect(calls.filter((c) => c.url.includes('/search/commits'))).toHaveLength(2);
   });
 
-  it('falha em vez de contar a menos quando a busca passa do limite de 1000 resultados', async () => {
+  it('fails instead of undercounting when a search exceeds the 1000-result limit', async () => {
     const { fetch: fetchImpl } = fakeFetch((url) => {
       if (url.endsWith('/user')) return jsonResponse({ login: 'ana' });
       if (url.includes('/search/commits')) {

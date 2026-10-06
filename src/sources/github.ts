@@ -43,7 +43,6 @@ export function createGitHubAdapter(cfg: GitHubConfig, opts: HttpOptions = {}): 
       items.push(...body.items);
       if (body.items.length < PAGE_SIZE) break;
     }
-    // A API de busca do GitHub devolve no máximo 1000 resultados; contar a menos sem avisar seria um erro silencioso.
     if (items.length < total) {
       throw new Error(`GitHub caps each search at 1000 results, and this one has ${total}. The report would be incomplete.`);
     }
@@ -59,7 +58,6 @@ export function createGitHubAdapter(cfg: GitHubConfig, opts: HttpOptions = {}): 
     },
 
     async collect(period: Period): Promise<Collected> {
-      // Ranges do GitHub são inclusivos nos dois extremos.
       const createdInPeriod = await searchAll<SearchPull>(
         '/search/issues',
         `is:pr author:${login} created:${period.from}..${period.to}`,
@@ -69,7 +67,6 @@ export function createGitHubAdapter(cfg: GitHubConfig, opts: HttpOptions = {}): 
         `is:pr is:merged author:${login} merged:${period.from}..${period.to}`,
       );
 
-      // Um PR pode aparecer nas duas consultas; o Map mantém uma cópia só.
       const pulls = new Map<string, SearchPull>();
       for (const item of [...createdInPeriod, ...mergedInPeriod]) pulls.set(item.html_url, item);
 

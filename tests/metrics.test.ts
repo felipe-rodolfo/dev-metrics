@@ -6,17 +6,17 @@ const period = { from: '2026-01-01', to: '2026-06-30' };
 const empty: Collected = { issues: [], changeRequests: [], commits: [] };
 
 describe('median', () => {
-  it('retorna null para lista vazia', () => {
+  it('returns null for an empty list', () => {
     expect(median([])).toBeNull();
   });
-  it('usa o valor do meio em lista ímpar e a média dos dois centrais em lista par', () => {
+  it('uses the middle value for odd lists and the average of the two middle values for even lists', () => {
     expect(median([5, 1, 3])).toBe(3);
     expect(median([1, 2, 3, 4])).toBe(2.5);
   });
 });
 
 describe('computeMetrics', () => {
-  it('período sem dados retorna zeros e tamanho "sem dados" (review focus 1)', () => {
+  it('returns zeros and "no data" size for a period without data (review focus 1)', () => {
     const m = computeMetrics(empty, period);
     expect(m.issuesResolved).toBe(0);
     expect(m.commits).toBe(0);
@@ -24,7 +24,7 @@ describe('computeMetrics', () => {
     expect(m.medianChangedFiles).toBeNull();
   });
 
-  it('conta issues concluídas dentro do período, agrupadas por tipo', () => {
+  it('counts issues resolved within the period, grouped by type', () => {
     const m = computeMetrics(
       {
         ...empty,
@@ -40,16 +40,16 @@ describe('computeMetrics', () => {
     expect(m.issuesByType).toEqual({ Story: 1, Bug: 1 });
   });
 
-  it('atribui PRs abertos e fechados pela data de criação e mergeados pela data de merge', () => {
+  it('attributes open and closed PRs by creation date and merged PRs by merge date', () => {
     const m = computeMetrics(
       {
         ...empty,
         changeRequests: [
           { source: 'github', id: '1', state: 'open', createdAt: '2026-02-01T00:00:00Z', mergedAt: null, additions: null, deletions: null, changedFiles: null },
           { source: 'github', id: '2', state: 'closed', createdAt: '2026-02-02T00:00:00Z', mergedAt: null, additions: null, deletions: null, changedFiles: null },
-          // Criado antes do período, mergeado dentro dele: conta como mergeado.
+          // Created before the period, merged inside it: counts as merged.
           { source: 'gitlab', id: '3', state: 'merged', createdAt: '2025-12-20T00:00:00Z', mergedAt: '2026-01-15T00:00:00Z', additions: 10, deletions: 2, changedFiles: 1 },
-          // Criado dentro do período, mergeado depois: não conta como mergeado.
+          // Created inside the period, merged after it: does not count as merged.
           { source: 'gitlab', id: '4', state: 'merged', createdAt: '2026-06-01T00:00:00Z', mergedAt: '2026-07-10T00:00:00Z', additions: 50, deletions: 5, changedFiles: 3 },
         ],
       },
@@ -60,7 +60,7 @@ describe('computeMetrics', () => {
     expect(m.changeRequestsMerged).toBe(1);
   });
 
-  it('calcula a mediana de linhas (adições + remoções) e de arquivos só sobre PRs mergeados', () => {
+  it('computes the median of lines (additions + deletions) and files only over merged PRs', () => {
     const m = computeMetrics(
       {
         ...empty,
@@ -76,7 +76,7 @@ describe('computeMetrics', () => {
     expect(m.medianChangedFiles).toBe(3);
   });
 
-  it('soma a quantidade de commits dentro do período', () => {
+  it('sums the commit count within the period', () => {
     const m = computeMetrics(
       {
         ...empty,

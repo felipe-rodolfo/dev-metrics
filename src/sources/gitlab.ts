@@ -17,10 +17,6 @@ interface PushEvent {
   push_data: { commit_count: number; ref_type: string; action?: string } | null;
 }
 
-/**
- * O diff do GitLab não traz cabeçalhos `---`/`+++`, então toda linha
- * começando com `+` ou `-` é conteúdo alterado.
- */
 export function countDiffLines(diff: string): { additions: number; deletions: number } {
   let additions = 0;
   let deletions = 0;
@@ -36,7 +32,6 @@ export function createGitLabAdapter(cfg: GitLabConfig, opts: HttpOptions = {}): 
   const api = `${cfg.baseUrl}/api/v4`;
   let userId = 0;
 
-  // Percorre todas as páginas usando o cabeçalho x-next-page.
   async function getAllPages<T>(url: string): Promise<T[]> {
     const items: T[] = [];
     let page = 1;
@@ -63,7 +58,6 @@ export function createGitLabAdapter(cfg: GitLabConfig, opts: HttpOptions = {}): 
     },
 
     async collect(period: Period): Promise<Collected> {
-      // created_before e merged_before são exclusivos, por isso usamos o dia seguinte.
       const createdParams = new URLSearchParams({
         author_id: String(userId),
         scope: 'all',
@@ -114,7 +108,6 @@ export function createGitLabAdapter(cfg: GitLabConfig, opts: HttpOptions = {}): 
         });
       }
 
-      // Eventos de push trazem a quantidade de commits de cada envio.
       const eventsParams = new URLSearchParams({
         action: 'pushed',
         after: shiftDay(period.from, -1),
@@ -129,8 +122,6 @@ export function createGitLabAdapter(cfg: GitLabConfig, opts: HttpOptions = {}): 
           count: event.push_data?.commit_count ?? 0,
         }));
 
-      // Um bulk push (acima de push_event_activities_limit) vem com commit_count 0 e sem a lista de commits.
-      // Criar ou remover branch também tem contagem zero, sem ser bulk push, então esses casos ficam de fora.
       const hasZeroCountPush = events.some(
         (event) =>
           event.push_data !== null &&

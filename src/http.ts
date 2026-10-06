@@ -36,7 +36,7 @@ export async function getJson<T>(
       throw new AuthError(`HTTP ${response.status} at ${host}: check the token and its access permissions.`);
     }
     if (!response.ok) {
-      throw new HttpError(response.status, `HTTP ${response.status} em ${host}`);
+      throw new HttpError(response.status, `HTTP ${response.status} at ${host}`);
     }
     return { body: (await response.json()) as T, headers: response.headers };
   }

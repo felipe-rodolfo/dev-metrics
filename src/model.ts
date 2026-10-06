@@ -1,22 +1,17 @@
 export interface Period {
-  /** Primeiro dia do intervalo, AAAA-MM-DD, inclusivo. */
   from: string;
-  /** Último dia do intervalo, AAAA-MM-DD, inclusivo. */
   to: string;
 }
 
 export interface Issue {
   key: string;
   type: string;
-  /** Data de resolução em UTC, ISO 8601. */
   resolvedAt: string;
 }
 
 export interface ChangeRequest {
   source: 'github' | 'gitlab';
-  /** URL ou identificador único do PR/MR. Usado para remover duplicatas. */
   id: string;
-  /** 'closed' significa fechado sem merge. */
   state: 'open' | 'merged' | 'closed';
   createdAt: string;
   mergedAt: string | null;
@@ -28,7 +23,6 @@ export interface ChangeRequest {
 export interface Commit {
   source: 'github' | 'gitlab';
   committedAt: string;
-  /** Quantidade de commits representada por este registro. */
   count: number;
 }
 
@@ -36,7 +30,6 @@ export interface Collected {
   issues: Issue[];
   changeRequests: ChangeRequest[];
   commits: Commit[];
-  /** Presente quando a contagem de commits da fonte pode estar subestimada. */
   commitsNote?: string;
 }
 

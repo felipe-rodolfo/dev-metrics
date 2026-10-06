@@ -5,7 +5,7 @@ import { fakeFetch, jsonResponse } from './helpers.js';
 const noSleep = async () => {};
 
 describe('getJson', () => {
-  it('espera o tempo de Retry-After e tenta de novo após 429', async () => {
+  it('waits for the Retry-After time and retries after a 429', async () => {
     const waits: number[] = [];
     let attempt = 0;
     const { fetch: fetchImpl } = fakeFetch(() => {
@@ -14,7 +14,7 @@ describe('getJson', () => {
         ? jsonResponse({}, 429, { 'retry-after': '2' })
         : jsonResponse({ ok: true });
     });
-    const { body } = await getJson<{ ok: boolean }>('https://api.exemplo.com/x', {}, {
+    const { body } = await getJson<{ ok: boolean }>('https://api.example.com/x', {}, {
       fetchImpl,
       sleep: async (ms) => { waits.push(ms); },
     });
@@ -22,27 +22,27 @@ describe('getJson', () => {
     expect(waits).toEqual([2000]);
   });
 
-  it('desiste depois do número máximo de tentativas em 429', async () => {
+  it('gives up after the maximum number of retries on 429', async () => {
     const { fetch: fetchImpl } = fakeFetch(() => jsonResponse({}, 429));
     await expect(
-      getJson('https://api.exemplo.com/x', {}, { fetchImpl, sleep: noSleep, maxRetries: 2 }),
+      getJson('https://api.example.com/x', {}, { fetchImpl, sleep: noSleep, maxRetries: 2 }),
     ).rejects.toBeInstanceOf(HttpError);
   });
 
-  it('lança AuthError em 401 e 403, com o host e sem o token', async () => {
+  it('throws AuthError on 401 and 403, with the host and without the token', async () => {
     const { fetch: fetchImpl } = fakeFetch(() => jsonResponse({}, 401));
-    const error = await getJson('https://api.exemplo.com/x?token=segredo', { Authorization: 'Bearer segredo' }, {
+    const error = await getJson('https://api.example.com/x?token=secret', { Authorization: 'Bearer secret' }, {
       fetchImpl,
       sleep: noSleep,
     }).catch((e) => e);
     expect(error).toBeInstanceOf(AuthError);
-    expect(error.message).toContain('api.exemplo.com');
-    expect(error.message).not.toContain('segredo');
+    expect(error.message).toContain('api.example.com');
+    expect(error.message).not.toContain('secret');
   });
 
-  it('lança HttpError com o status em outros erros', async () => {
+  it('throws HttpError with the status for other errors', async () => {
     const { fetch: fetchImpl } = fakeFetch(() => jsonResponse({}, 500));
-    const error = await getJson('https://api.exemplo.com/x', {}, { fetchImpl, sleep: noSleep }).catch((e) => e);
+    const error = await getJson('https://api.example.com/x', {}, { fetchImpl, sleep: noSleep }).catch((e) => e);
     expect(error).toBeInstanceOf(HttpError);
     expect(error.status).toBe(500);
   });

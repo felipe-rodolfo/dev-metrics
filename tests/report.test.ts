@@ -5,7 +5,6 @@ import type { Collected, SourceResult } from '../src/model.js';
 const period = { from: '2026-01-01', to: '2026-06-30' };
 const emptyData: Collected = { issues: [], changeRequests: [], commits: [] };
 
-// Text of a `## <title>` section up to the next level-2 heading.
 function section(report: string, title: string): string {
   const start = report.indexOf(`## ${title}`);
   if (start === -1) return '';

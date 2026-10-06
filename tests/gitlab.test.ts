@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { createGitLabAdapter, countDiffLines } from '../src/sources/gitlab.js';
 import { fakeFetch, jsonResponse } from './helpers.js';
 
-const cfg = { baseUrl: 'https://gitlab.exemplo.com', token: 'gl-token' };
+const cfg = { baseUrl: 'https://gitlab.example.com', token: 'gl-token' };
 const period = { from: '2026-01-01', to: '2026-06-30' };
 
 const mr = (iid: number, state: string, createdAt: string, mergedAt: string | null) => ({
@@ -15,21 +15,21 @@ const mr = (iid: number, state: string, createdAt: string, mergedAt: string | nu
 });
 
 describe('countDiffLines', () => {
-  it('conta linhas adicionadas e removidas, ignorando o contexto', () => {
-    const diff = '@@ -1,2 +1,2 @@\n contexto\n-antiga\n+nova\n+extra\n';
+  it('counts added and removed lines, ignoring context', () => {
+    const diff = '@@ -1,2 +1,2 @@\n context\n-old\n+new\n+extra\n';
     expect(countDiffLines(diff)).toEqual({ additions: 2, deletions: 1 });
   });
 });
 
 describe('gitlab adapter', () => {
-  it('identify usa /user com PRIVATE-TOKEN', async () => {
+  it('identify uses /user with PRIVATE-TOKEN', async () => {
     const { fetch: fetchImpl, calls } = fakeFetch(() => jsonResponse({ id: 7, username: 'ana' }));
     await createGitLabAdapter(cfg, { fetchImpl }).identify();
-    expect(calls[0].url).toBe('https://gitlab.exemplo.com/api/v4/user');
+    expect(calls[0].url).toBe('https://gitlab.example.com/api/v4/user');
     expect((calls[0].init?.headers as Record<string, string>)['PRIVATE-TOKEN']).toBe('gl-token');
   });
 
-  it('mapeia estados das MRs e calcula o tamanho só das mergeadas (review focus 5)', async () => {
+  it('maps merge request states and computes size only for merged ones (review focus 5)', async () => {
     const { fetch: fetchImpl } = fakeFetch((url) => {
       if (url.endsWith('/api/v4/user')) return jsonResponse({ id: 7, username: 'ana' });
       if (url.includes('/merge_requests?') && url.includes('created_after')) {
@@ -61,7 +61,7 @@ describe('gitlab adapter', () => {
     expect(mergedThree?.changedFiles).toBe(2);
   });
 
-  it('soma commits dos eventos de push e pagina com x-next-page (review focus 3)', async () => {
+  it('sums commits from push events and paginates with x-next-page (review focus 3)', async () => {
     const pages = [
       { body: [{ created_at: '2026-02-01T10:00:00.000+00:00', action_name: 'pushed to', push_data: { commit_count: 3, ref_type: 'branch' } }], headers: { 'x-next-page': '2' } },
       { body: [{ created_at: '2026-03-01T10:00:00.000+00:00', action_name: 'pushed to', push_data: { commit_count: 2, ref_type: 'branch' } }], headers: { 'x-next-page': '' } },
@@ -82,7 +82,7 @@ describe('gitlab adapter', () => {
     expect(eventsUrl.searchParams.get('before')).toBe('2026-07-01');
   });
 
-  it('marca a contagem de commits como incompleta quando há bulk push, sem perder as MRs', async () => {
+  it('marks the commit count as incomplete when a bulk push is present, without losing MRs', async () => {
     const { fetch: fetchImpl } = fakeFetch((url) => {
       if (url.endsWith('/api/v4/user')) return jsonResponse({ id: 7, username: 'ana' });
       if (url.includes('/events')) {
@@ -103,7 +103,7 @@ describe('gitlab adapter', () => {
     expect(data.commits.reduce((total, c) => total + c.count, 0)).toBe(2);
   });
 
-  it('não marca a criação de branch sem commits novos como bulk push', async () => {
+  it('does not flag branch creation without new commits as a bulk push', async () => {
     const { fetch: fetchImpl } = fakeFetch((url) => {
       if (url.includes('/events')) {
         return jsonResponse([{ created_at: '2026-07-26T10:00:00.000+00:00', action_name: 'pushed to', push_data: { commit_count: 0, action: 'created', ref_type: 'branch' } }]);
@@ -114,7 +114,7 @@ describe('gitlab adapter', () => {
     expect(data.commitsNote).toBeUndefined();
   });
 
-  it('não marca nada quando todos os pushes trazem a contagem de commits', async () => {
+  it('sets no note when every push reports its commit count', async () => {
     const { fetch: fetchImpl } = fakeFetch((url) => {
       if (url.includes('/events')) {
         return jsonResponse([{ created_at: '2026-02-01T10:00:00.000+00:00', action_name: 'pushed to', push_data: { commit_count: 3, ref_count: 1, ref_type: 'branch' } }]);

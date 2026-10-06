@@ -21,7 +21,7 @@ export async function run(argv: string[], env: NodeJS.ProcessEnv, deps: AppDeps 
     config = loadConfig(argv, env);
   } catch (error) {
     if (error instanceof ConfigError) {
-      err(`Erro: ${error.message}`);
+      err(`Error: ${error.message}`);
       return 1;
     }
     throw error;
@@ -29,12 +29,11 @@ export async function run(argv: string[], env: NodeJS.ProcessEnv, deps: AppDeps 
 
   const adapters = (deps.adapters ?? ((c) => createAdapters(c)))(config);
 
-  // Confirma todos os tokens antes de buscar qualquer dado.
   for (const adapter of adapters) {
     try {
       await adapter.identify();
     } catch (error) {
-      err(`Erro em ${adapter.name}: ${(error as Error).message}`);
+      err(`Error in ${adapter.name}: ${(error as Error).message}`);
       return 1;
     }
   }
@@ -54,11 +53,11 @@ export async function run(argv: string[], env: NodeJS.ProcessEnv, deps: AppDeps 
   await mkdir(config.outDir, { recursive: true });
   const file = join(config.outDir, `report-${config.period.from}_${config.period.to}.md`);
   await writeFile(file, markdown, 'utf8');
-  out(`Relatório gerado: ${file}`);
+  out(`Report generated: ${file}`);
 
   const incomplete = results.some((result) => !result.ok);
   if (incomplete) {
-    err('Atenção: uma ou mais fontes estão incompletas. Veja a seção "Fontes" do relatório.');
+    err('Warning: one or more sources are incomplete. See the "Sources" section of the report.');
   }
   return incomplete ? 1 : 0;
 }
