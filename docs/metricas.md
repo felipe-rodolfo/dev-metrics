@@ -71,7 +71,11 @@ Essa detecção é conservadora: pode haver um aviso sem bulk push real. Não h�
 
 ### Relatório em inglês, arquivo em `reports/`
 
-O relatório é gerado em inglês, em `reports/report-<from>_<to>.md`. A pasta `reports/` é ignorada pelo git, porque o relatório contém dados de avaliação de uma pessoa.
+O relatório é gerado em inglês, em `reports/report-<from>_<to>.md` e `reports/report-<from>_<to>.xlsx`. A pasta `reports/` é ignorada pelo git, porque o relatório contém dados de avaliação de uma pessoa.
+
+### Planilha (.xlsx): mesma métrica, uma aba por fonte
+
+O `.xlsx` tem os mesmos números do `.md`, só em formato tabular: uma aba por fonte configurada (Jira, GitHub, GitLab) e uma aba "Sources" com o status de cada uma. Métricas sem dados no período ficam com a célula em branco, não com o texto "no data" — assim uma soma ou média feita na própria planilha não quebra por célula de texto.
 
 ## Permissões necessárias
 

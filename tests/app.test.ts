@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import ExcelJS from 'exceljs';
 import { run } from '../src/app.js';
 import { AuthError } from '../src/http.js';
 import type { SourceAdapter } from '../src/sources/adapter.js';
@@ -66,6 +67,14 @@ describe('run', () => {
     expect(code).toBe(0);
     const report = await readFile(join(outDir, 'report-2026-01-01_2026-06-30.md'), 'utf8');
     expect(report).toContain('## Code activity: GitHub');
+  });
+
+  it('writes the same metrics as an .xlsx workbook alongside the .md report', async () => {
+    const code = await run(argv(outDir), env, { ...io, adapters: () => [adapter({})] });
+    expect(code).toBe(0);
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.readFile(join(outDir, 'report-2026-01-01_2026-06-30.xlsx'));
+    expect(workbook.getWorksheet('GitHub')).toBeDefined();
   });
 
   it('partial failure: writes the report with the incomplete source and returns a non-zero code', async () => {

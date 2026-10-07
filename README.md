@@ -30,7 +30,7 @@ A CLI lê o `.env` da pasta de execução. Variáveis já definidas no terminal 
 
 O Jira é obrigatório. Defina também pelo menos um entre `GITHUB_TOKEN` e `GITLAB_TOKEN`. Se você usa as duas plataformas, defina as duas.
 
-O relatório é gravado em `./reports/report-<from>_<to>.md`. A pasta `reports/` fica fora do git.
+O relatório é gravado em `./reports/report-<from>_<to>.md` e, com as mesmas métricas, em `./reports/report-<from>_<to>.xlsx` (uma aba por fonte, mais uma aba "Sources" com o status de cada uma). A pasta `reports/` fica fora do git.
 
 Se uma fonte falhar, o relatório é gerado com a seção dela marcada como incompleta, e a CLI sai com código diferente de zero.
 

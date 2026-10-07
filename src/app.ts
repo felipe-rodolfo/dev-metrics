@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import { loadConfig, ConfigError, Config } from './config.js';
 import { SourceResult } from './model.js';
 import { renderReport } from './report.js';
+import { renderWorkbook } from './xlsx.js';
 import { createAdapters } from './sources/index.js';
 import type { SourceAdapter } from './sources/adapter.js';
 
@@ -49,11 +50,13 @@ export async function run(argv: string[], env: NodeJS.ProcessEnv, deps: AppDeps 
   );
 
   const markdown = renderReport(config.period, results);
+  const workbook = renderWorkbook(config.period, results);
 
   await mkdir(config.outDir, { recursive: true });
-  const file = join(config.outDir, `report-${config.period.from}_${config.period.to}.md`);
-  await writeFile(file, markdown, 'utf8');
-  out(`Report generated: ${file}`);
+  const base = join(config.outDir, `report-${config.period.from}_${config.period.to}`);
+  await writeFile(`${base}.md`, markdown, 'utf8');
+  await workbook.xlsx.writeFile(`${base}.xlsx`);
+  out(`Report generated: ${base}.md`);
 
   const incomplete = results.some((result) => !result.ok);
   if (incomplete) {
