@@ -1,13 +1,31 @@
 {
   "name": "dev-metrics",
   "version": "0.1.0",
-  "private": true,
+  "description": "Generates a local developer metrics report (Jira, GitHub and GitLab) for a date range.",
+  "license": "MIT",
+  "author": "Felipe Rodolfo",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/felipe-rodolfo/dev-metrics.git"
+  },
+  "keywords": [
+    "cli",
+    "metrics",
+    "jira",
+    "github",
+    "gitlab",
+    "developer-metrics"
+  ],
   "type": "module",
   "bin": {
     "dev-metrics": "dist/cli.js"
   },
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
+    "prepublishOnly": "npm run build",
     "test": "vitest run"
   },
   "engines": {

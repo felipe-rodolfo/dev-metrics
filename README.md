@@ -8,9 +8,24 @@ Gera um relatório local de métricas de um desenvolvedor (Jira, GitHub e GitLab
 - **GitHub**: crie um fine-grained personal access token com leitura de repositórios e de metadados.
 - **GitLab**: crie um personal access token com o escopo `read_api`.
 
+## Instalação
+
+```bash
+npm install -g dev-metrics
+dev-metrics --from 2026-01-01 --to 2026-06-30
+```
+
+Ou sem instalar, via `npx`:
+
+```bash
+npx dev-metrics --from 2026-01-01 --to 2026-06-30
+```
+
+Alternativamente, para rodar a partir do código-fonte (ver seção "Uso" abaixo).
+
 ## Uso
 
-Crie um arquivo `.env` na pasta do projeto (ele já está no `.gitignore`):
+Crie um arquivo `.env` na pasta onde você vai rodar o comando (se for clonar o repo, ele já está no `.gitignore`):
 
 ```bash
 JIRA_BASE_URL=https://sua-empresa.atlassian.net
