@@ -7,6 +7,7 @@ export interface Issue {
   key: string;
   type: string;
   resolvedAt: string;
+  storyPoints: number | null;
 }
 
 export interface ChangeRequest {

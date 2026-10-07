@@ -22,7 +22,11 @@ export function renderReport(period: Period, results: SourceResult[]): string {
       for (const [type, count] of Object.entries(metrics.issuesByType).sort()) {
         lines.push(`  - ${type}: ${count}`);
       }
-      lines.push('');
+      lines.push(
+        `- Average story points: ${show(metrics.averageStoryPoints)}`,
+        `- Median story points: ${show(metrics.medianStoryPoints)}`,
+        '',
+      );
     }
   }
 
@@ -43,6 +47,8 @@ export function renderReport(period: Period, results: SourceResult[]): string {
       `- Median size in changed lines: ${show(metrics.medianChangedLines)}`,
       `- Median size in changed files: ${show(metrics.medianChangedFiles)}`,
       `- Commits: ${metrics.commits}`,
+      `- Average cycle time (hours): ${show(metrics.averageCycleTimeHours)}`,
+      `- Median cycle time (hours): ${show(metrics.medianCycleTimeHours)}`,
       '',
     );
     if (result.data.commitsNote) {

@@ -28,7 +28,54 @@ describe('renderReport', () => {
 
   it('shows "no data" when there is no merged PR in the period', () => {
     const results: SourceResult[] = [{ ok: true, name: 'GitHub', data: emptyData }];
-    expect(renderReport(period, results)).toContain('Median size in changed lines: no data');
+    const report = renderReport(period, results);
+    expect(report).toContain('Median size in changed lines: no data');
+    expect(report).toContain('Average cycle time (hours): no data');
+    expect(report).toContain('Median cycle time (hours): no data');
+  });
+
+  it('shows "no data" story points when no resolved issue has an estimate', () => {
+    const results: SourceResult[] = [{ ok: true, name: 'Jira', data: emptyData }];
+    const report = renderReport(period, results);
+    expect(report).toContain('Average story points: no data');
+    expect(report).toContain('Median story points: no data');
+  });
+
+  it('shows average and median story points for resolved Jira issues', () => {
+    const results: SourceResult[] = [
+      {
+        ok: true,
+        name: 'Jira',
+        data: {
+          ...emptyData,
+          issues: [
+            { key: 'A-1', type: 'Story', resolvedAt: '2026-02-10T10:00:00Z', storyPoints: 3 },
+            { key: 'A-2', type: 'Story', resolvedAt: '2026-03-01T10:00:00Z', storyPoints: 5 },
+          ],
+        },
+      },
+    ];
+    const report = renderReport(period, results);
+    expect(report).toContain('Average story points: 4');
+    expect(report).toContain('Median story points: 4');
+  });
+
+  it('shows average and median cycle time for merged PRs/MRs', () => {
+    const results: SourceResult[] = [
+      {
+        ok: true,
+        name: 'GitHub',
+        data: {
+          ...emptyData,
+          changeRequests: [
+            { source: 'github', id: '1', state: 'merged', createdAt: '2026-01-01T00:00:00Z', mergedAt: '2026-01-02T00:00:00Z', additions: 1, deletions: 0, changedFiles: 1 },
+          ],
+        },
+      },
+    ];
+    const report = renderReport(period, results);
+    expect(report).toContain('Average cycle time (hours): 24');
+    expect(report).toContain('Median cycle time (hours): 24');
   });
 
   it('does not show sections for sources that were not configured', () => {

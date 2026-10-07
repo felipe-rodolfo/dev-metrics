@@ -19,6 +19,8 @@ O relatório mostra números acompanhados do contexto que os explica. Não é um
 - **Issues concluídas**: issues que o usuário autenticado moveu para um status da categoria *concluído* dentro do período, agrupadas por tipo.
 - Os nomes dos statuses concluídos vêm da própria instância (`GET /rest/api/3/status`, categoria `done`), e não ficam fixos no código. Isso é necessário porque os nomes variam por idioma e configuração.
 - **Atribuição**: a data usada é a de resolução da issue (`resolutiondate`), e não a data exata da transição. Se uma issue for reaberta e concluída de novo, a data pode cair em outro mês.
+- **Story points**: média e mediana sobre as issues concluídas no período, ignorando issues sem estimativa. Se nenhuma issue do período tiver estimativa, aparece como "no data".
+- O campo de story points é um custom field do Jira, cujo ID varia por instância. O adaptador descobre o campo em `GET /rest/api/3/field`, procurando por um nome como "Story Points" ou "Story point estimate". Quando a instância usa outro nome, defina `JIRA_STORY_POINTS_FIELD` com o ID do campo (ex.: `customfield_10016`) para pular a busca por nome.
 
 ### GitHub e GitLab: atividade de código
 
@@ -29,8 +31,13 @@ Cada plataforma tem a própria seção no relatório, com as métricas calculada
 - **Fechados sem merge**: criados no período e fechados sem merge.
 - **Tamanho mediano**: mediana de linhas alteradas (adições + remoções) e de arquivos alterados, só nos PRs/MRs mergeados no período. Se não houver nenhum, aparece como "no data", e não como zero.
 - **Commits**: commits do próprio usuário com data dentro do período.
+- **Cycle time**: média e mediana, em horas, do tempo entre a abertura e o merge, só nos PRs/MRs mergeados no período. Se não houver nenhum, aparece como "no data".
 
 A mediana é usada no lugar da média para que um PR muito grande não distorça o resultado.
+
+### O que "cycle time" significa aqui
+
+É o tempo entre a abertura e o merge do PR/MR, não o tempo de ciclo de status do Jira (do início do trabalho até a conclusão da issue). Esse segundo tipo de cycle time exigiria o histórico de transições de status de cada issue (uma chamada extra por issue) e uma definição de "início do trabalho" que varia por time, e por isso continua fora do escopo desta ferramenta.
 
 ## Decisões técnicas
 

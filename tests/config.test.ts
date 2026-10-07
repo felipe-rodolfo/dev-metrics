@@ -62,4 +62,12 @@ describe('loadConfig', () => {
     expect(config.github?.apiUrl).toBe('https://api.github.com');
     expect(config.outDir).toBe('./reports');
   });
+
+  it('reads the optional story points field override from JIRA_STORY_POINTS_FIELD', () => {
+    const withField = loadConfig(base, { ...jira, GITHUB_TOKEN: 'x', JIRA_STORY_POINTS_FIELD: 'customfield_999' });
+    expect(withField.jira.storyPointsField).toBe('customfield_999');
+
+    const withoutField = loadConfig(base, { ...jira, GITHUB_TOKEN: 'x' });
+    expect(withoutField.jira.storyPointsField).toBeUndefined();
+  });
 });

@@ -4,6 +4,7 @@ export interface JiraConfig {
   baseUrl: string;
   email: string;
   token: string;
+  storyPointsField?: string;
 }
 
 export interface GitHubConfig {
@@ -51,7 +52,12 @@ export function loadConfig(argv: string[], env: NodeJS.ProcessEnv): Config {
   const config: Config = {
     period: { from, to },
     outDir: readArg(argv, 'out') ?? './reports',
-    jira: { baseUrl: stripSlash(env.JIRA_BASE_URL), email: env.JIRA_EMAIL, token: env.JIRA_API_TOKEN },
+    jira: {
+      baseUrl: stripSlash(env.JIRA_BASE_URL),
+      email: env.JIRA_EMAIL,
+      token: env.JIRA_API_TOKEN,
+      ...(env.JIRA_STORY_POINTS_FIELD ? { storyPointsField: env.JIRA_STORY_POINTS_FIELD } : {}),
+    },
   };
 
   if (env.GITHUB_TOKEN) {

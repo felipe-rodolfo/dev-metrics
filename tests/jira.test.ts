@@ -5,14 +5,18 @@ import { fakeFetch, jsonResponse } from './helpers.js';
 
 const cfg = { baseUrl: 'https://x.atlassian.net', email: 'ana@example.com', token: 'jira-token' };
 const period = { from: '2026-01-01', to: '2026-06-30' };
-const issue = (key: string, type: string, resolutiondate: string) => ({
+const issue = (key: string, type: string, resolutiondate: string, extraFields: Record<string, unknown> = {}) => ({
   key,
-  fields: { issuetype: { name: type }, resolutiondate },
+  fields: { issuetype: { name: type }, resolutiondate, ...extraFields },
 });
 const statuses = [
   { name: 'To Do', statusCategory: { key: 'new' } },
   { name: 'In Progress', statusCategory: { key: 'indeterminate' } },
   { name: 'Done', statusCategory: { key: 'done' } },
+];
+const fields = [
+  { id: 'customfield_10001', name: 'Sprint' },
+  { id: 'customfield_10016', name: 'Story point estimate' },
 ];
 
 describe('jira adapter', () => {
@@ -30,6 +34,7 @@ describe('jira adapter', () => {
   it('fetches issues the user moved to a done status within the period, regardless of assignee', async () => {
     const { fetch: fetchImpl, calls } = fakeFetch((url) => {
       if (url.includes('/rest/api/3/status')) return jsonResponse(statuses);
+      if (url.includes('/rest/api/3/field')) return jsonResponse([]);
       return jsonResponse({ issues: [issue('A-1', 'Story', '2026-02-10T10:00:00.000+0000')], isLast: true });
     });
     await createJiraAdapter(cfg, { fetchImpl }).collect(period);
@@ -47,6 +52,7 @@ describe('jira adapter', () => {
     ];
     const { fetch: fetchImpl, calls } = fakeFetch((url) => {
       if (url.includes('/rest/api/3/status')) return jsonResponse(statuses);
+      if (url.includes('/rest/api/3/field')) return jsonResponse([]);
       return pages.shift()!;
     });
     const data = await createJiraAdapter(cfg, { fetchImpl }).collect(period);
@@ -60,6 +66,7 @@ describe('jira adapter', () => {
   it('converts resolutiondate from a non-UTC offset (review focus 5)', async () => {
     const { fetch: fetchImpl } = fakeFetch((url) => {
       if (url.includes('/rest/api/3/status')) return jsonResponse(statuses);
+      if (url.includes('/rest/api/3/field')) return jsonResponse([]);
       return jsonResponse({ issues: [issue('A-3', 'Task', '2026-03-10T23:30:00.000-0300')], isLast: true });
     });
     const data = await createJiraAdapter(cfg, { fetchImpl }).collect(period);
@@ -74,5 +81,63 @@ describe('jira adapter', () => {
     const data = await createJiraAdapter(cfg, { fetchImpl }).collect(period);
     expect(data.issues).toEqual([]);
     expect(calls.some((c) => c.url.includes('/search/jql'))).toBe(false);
+  });
+
+  it('discovers the story points field by name, requests it and parses its value', async () => {
+    const { fetch: fetchImpl, calls } = fakeFetch((url) => {
+      if (url.includes('/rest/api/3/status')) return jsonResponse(statuses);
+      if (url.includes('/rest/api/3/field')) return jsonResponse(fields);
+      return jsonResponse({
+        issues: [issue('A-1', 'Story', '2026-02-10T10:00:00.000+0000', { customfield_10016: 5 })],
+        isLast: true,
+      });
+    });
+    const data = await createJiraAdapter(cfg, { fetchImpl }).collect(period);
+
+    const search = calls.find((c) => c.url.includes('/search/jql'))!;
+    expect(new URL(search.url).searchParams.get('fields')).toContain('customfield_10016');
+    expect(data.issues[0].storyPoints).toBe(5);
+  });
+
+  it('returns null story points when the issue has no estimate', async () => {
+    const { fetch: fetchImpl } = fakeFetch((url) => {
+      if (url.includes('/rest/api/3/status')) return jsonResponse(statuses);
+      if (url.includes('/rest/api/3/field')) return jsonResponse(fields);
+      return jsonResponse({
+        issues: [issue('A-1', 'Story', '2026-02-10T10:00:00.000+0000', { customfield_10016: null })],
+        isLast: true,
+      });
+    });
+    const data = await createJiraAdapter(cfg, { fetchImpl }).collect(period);
+    expect(data.issues[0].storyPoints).toBeNull();
+  });
+
+  it('returns null story points without querying the field list when no field matches "story points"', async () => {
+    const { fetch: fetchImpl, calls } = fakeFetch((url) => {
+      if (url.includes('/rest/api/3/status')) return jsonResponse(statuses);
+      if (url.includes('/rest/api/3/field')) return jsonResponse([{ id: 'customfield_10001', name: 'Sprint' }]);
+      return jsonResponse({ issues: [issue('A-1', 'Story', '2026-02-10T10:00:00.000+0000')], isLast: true });
+    });
+    const data = await createJiraAdapter(cfg, { fetchImpl }).collect(period);
+
+    const search = calls.find((c) => c.url.includes('/search/jql'))!;
+    expect(new URL(search.url).searchParams.get('fields')).toBe('issuetype,resolutiondate');
+    expect(data.issues[0].storyPoints).toBeNull();
+  });
+
+  it('skips field discovery and uses storyPointsField from config when set', async () => {
+    const { fetch: fetchImpl, calls } = fakeFetch((url) => {
+      if (url.includes('/rest/api/3/status')) return jsonResponse(statuses);
+      return jsonResponse({
+        issues: [issue('A-1', 'Story', '2026-02-10T10:00:00.000+0000', { customfield_999: 8 })],
+        isLast: true,
+      });
+    });
+    const data = await createJiraAdapter({ ...cfg, storyPointsField: 'customfield_999' }, { fetchImpl }).collect(period);
+
+    expect(calls.some((c) => c.url.includes('/rest/api/3/field'))).toBe(false);
+    const search = calls.find((c) => c.url.includes('/search/jql'))!;
+    expect(new URL(search.url).searchParams.get('fields')).toContain('customfield_999');
+    expect(data.issues[0].storyPoints).toBe(8);
   });
 });
