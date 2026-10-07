@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { loadConfig, ConfigError } from '../src/config.js';
 
-const base = ['--from', '2026-01-01', '--to', '2026-06-30'];
+const base = { from: '2026-01-01', to: '2026-06-30' };
 const jira = {
   JIRA_API_TOKEN: 't',
   JIRA_EMAIL: 'a@example.com',
@@ -10,11 +10,15 @@ const jira = {
 
 describe('loadConfig', () => {
   it('rejects dates outside the expected format', () => {
-    expect(() => loadConfig(['--from', '01/01/2026', '--to', '2026-06-30'], { ...jira, GITHUB_TOKEN: 'x' })).toThrow(ConfigError);
+    expect(() => loadConfig({ from: '01/01/2026', to: '2026-06-30' }, { ...jira, GITHUB_TOKEN: 'x' })).toThrow(ConfigError);
+  });
+
+  it('rejects missing --from or --to', () => {
+    expect(() => loadConfig({ to: '2026-06-30' }, { ...jira, GITHUB_TOKEN: 'x' })).toThrow(/--from/);
   });
 
   it('rejects --from after --to', () => {
-    expect(() => loadConfig(['--from', '2026-07-01', '--to', '2026-06-30'], { ...jira, GITHUB_TOKEN: 'x' })).toThrow(/--from/);
+    expect(() => loadConfig({ from: '2026-07-01', to: '2026-06-30' }, { ...jira, GITHUB_TOKEN: 'x' })).toThrow(/--from/);
   });
 
   it('requires Jira even when GitHub and GitLab are configured', () => {
@@ -61,6 +65,11 @@ describe('loadConfig', () => {
     const config = loadConfig(base, { ...jira, GITHUB_TOKEN: 'x' });
     expect(config.github?.apiUrl).toBe('https://api.github.com');
     expect(config.outDir).toBe('./reports');
+  });
+
+  it('uses --out when provided', () => {
+    const config = loadConfig({ ...base, out: './custom' }, { ...jira, GITHUB_TOKEN: 'x' });
+    expect(config.outDir).toBe('./custom');
   });
 
   it('reads the optional story points field override from JIRA_STORY_POINTS_FIELD', () => {

@@ -31,14 +31,14 @@ export function stripSlash(url: string): string {
   return url.replace(/\/+$/, '');
 }
 
-function readArg(argv: string[], name: string): string | undefined {
-  const index = argv.indexOf(`--${name}`);
-  return index === -1 ? undefined : argv[index + 1];
+export interface CliOptions {
+  from?: string;
+  to?: string;
+  out?: string;
 }
 
-export function loadConfig(argv: string[], env: NodeJS.ProcessEnv): Config {
-  const from = readArg(argv, 'from');
-  const to = readArg(argv, 'to');
+export function loadConfig(options: CliOptions, env: NodeJS.ProcessEnv): Config {
+  const { from, to } = options;
   if (!from || !to || !isValidDay(from) || !isValidDay(to)) {
     throw new ConfigError('Provide --from and --to in the format YYYY-MM-DD.');
   }
@@ -51,7 +51,7 @@ export function loadConfig(argv: string[], env: NodeJS.ProcessEnv): Config {
   }
   const config: Config = {
     period: { from, to },
-    outDir: readArg(argv, 'out') ?? './reports',
+    outDir: options.out ?? './reports',
     jira: {
       baseUrl: stripSlash(env.JIRA_BASE_URL),
       email: env.JIRA_EMAIL,

@@ -1,6 +1,6 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { loadConfig, ConfigError, Config } from './config.js';
+import { CliOptions, loadConfig, ConfigError, Config } from './config.js';
 import { SourceResult } from './model.js';
 import { renderReport } from './report.js';
 import { renderWorkbook } from './xlsx.js';
@@ -13,13 +13,13 @@ export interface AppDeps {
   err?: (line: string) => void;
 }
 
-export async function run(argv: string[], env: NodeJS.ProcessEnv, deps: AppDeps = {}): Promise<number> {
+export async function run(options: CliOptions, env: NodeJS.ProcessEnv, deps: AppDeps = {}): Promise<number> {
   const out = deps.out ?? console.log;
   const err = deps.err ?? console.error;
 
   let config: Config;
   try {
-    config = loadConfig(argv, env);
+    config = loadConfig(options, env);
   } catch (error) {
     if (error instanceof ConfigError) {
       err(`Error: ${error.message}`);

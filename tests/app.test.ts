@@ -7,7 +7,7 @@ import { run } from '../src/app.js';
 import { AuthError } from '../src/http.js';
 import type { SourceAdapter } from '../src/sources/adapter.js';
 
-const argv = (out: string) => ['--from', '2026-01-01', '--to', '2026-06-30', '--out', out];
+const options = (out: string) => ({ from: '2026-01-01', to: '2026-06-30', out });
 const env = {
   JIRA_API_TOKEN: 't',
   JIRA_EMAIL: 'a@example.com',
@@ -42,14 +42,14 @@ const adapter = (overrides: Partial<SourceAdapter>): SourceAdapter => ({
 
 describe('run', () => {
   it('returns 1 with a message when the configuration is invalid', async () => {
-    const code = await run(['--from', '2026-01-01'], env, { ...io, adapters: () => [] });
+    const code = await run({ from: '2026-01-01' }, env, { ...io, adapters: () => [] });
     expect(code).toBe(1);
     expect(errors.join('\n')).toContain('--from and --to');
   });
 
   it('stops before collecting data when a token is rejected', async () => {
     let collected = false;
-    const code = await run(argv(outDir), env, {
+    const code = await run(options(outDir), env, {
       ...io,
       adapters: () => [
         adapter({
@@ -63,14 +63,14 @@ describe('run', () => {
   });
 
   it('writes the report and returns 0 when every source works', async () => {
-    const code = await run(argv(outDir), env, { ...io, adapters: () => [adapter({})] });
+    const code = await run(options(outDir), env, { ...io, adapters: () => [adapter({})] });
     expect(code).toBe(0);
     const report = await readFile(join(outDir, 'report-2026-01-01_2026-06-30.md'), 'utf8');
     expect(report).toContain('## Code activity: GitHub');
   });
 
   it('writes the same metrics as an .xlsx workbook alongside the .md report', async () => {
-    const code = await run(argv(outDir), env, { ...io, adapters: () => [adapter({})] });
+    const code = await run(options(outDir), env, { ...io, adapters: () => [adapter({})] });
     expect(code).toBe(0);
     const workbook = new ExcelJS.Workbook();
     await workbook.xlsx.readFile(join(outDir, 'report-2026-01-01_2026-06-30.xlsx'));
@@ -78,7 +78,7 @@ describe('run', () => {
   });
 
   it('partial failure: writes the report with the incomplete source and returns a non-zero code', async () => {
-    const code = await run(argv(outDir), env, {
+    const code = await run(options(outDir), env, {
       ...io,
       adapters: () => [
         adapter({ name: 'GitHub' }),

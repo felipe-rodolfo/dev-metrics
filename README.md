@@ -24,7 +24,11 @@ GITLAB_TOKEN=...
 ```bash
 npm run build
 node dist/cli.js --from 2026-01-01 --to 2026-06-30
+# ou com os aliases curtos:
+node dist/cli.js -f 2026-01-01 -t 2026-06-30 -o ./relatorios
 ```
+
+Veja todas as opções com `node dist/cli.js --help`, e a versão instalada com `node dist/cli.js --version`.
 
 A CLI lê o `.env` da pasta de execução. Variáveis já definidas no terminal têm prioridade sobre ele.
 
