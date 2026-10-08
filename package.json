@@ -1,6 +1,9 @@
 {
-  "name": "dev-metrics",
+  "name": "@feliperold/dev-metrics",
   "version": "0.1.0",
+  "publishConfig": {
+    "access": "public"
+  },
   "description": "Generates a local developer metrics report (Jira, GitHub and GitLab) for a date range.",
   "license": "MIT",
   "author": "Felipe Rodolfo",

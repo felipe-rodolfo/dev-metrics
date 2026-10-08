@@ -11,14 +11,14 @@ Gera um relatório local de métricas de um desenvolvedor (Jira, GitHub e GitLab
 ## Instalação
 
 ```bash
-npm install -g dev-metrics
+npm install -g @feliperold/dev-metrics
 dev-metrics --from 2026-01-01 --to 2026-06-30
 ```
 
 Ou sem instalar, via `npx`:
 
 ```bash
-npx dev-metrics --from 2026-01-01 --to 2026-06-30
+npx @feliperold/dev-metrics --from 2026-01-01 --to 2026-06-30
 ```
 
 Alternativamente, para rodar a partir do código-fonte (ver seção "Uso" abaixo).
