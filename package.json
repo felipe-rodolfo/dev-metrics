@@ -7,6 +7,7 @@
   "description": "Generates a local developer metrics report (Jira, GitHub and GitLab) for a date range.",
   "license": "MIT",
   "author": "Felipe Rodolfo",
+  "homepage": "https://felipe-rodolfo.github.io/dev-metrics-site/",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/felipe-rodolfo/dev-metrics.git"

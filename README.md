@@ -1,5 +1,7 @@
 # dev-metrics
 
+[Landing page](https://felipe-rodolfo.github.io/dev-metrics-site/)
+
 Gera um relatório local de métricas de um desenvolvedor (Jira, GitHub e GitLab) em um intervalo de datas, para avaliação semestral. Cada pessoa roda a ferramenta para si mesma, com os próprios tokens.
 
 ## Como obter os tokens
